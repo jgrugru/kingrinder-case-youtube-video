@@ -1,0 +1,12 @@
+__pycache__/
+.DS_Store
+# third-party Printables downloads, kept locally only
+*.zip
+
+# local seam test notes, not published
+src/kingrinder_k6_case/seam_test_labels.md
+src/kingrinder_k6_case/seam_test_log.md
+
+# only the two case halves get published; everything else in output stays local
+*.gcode
+*.3mf
