@@ -10,3 +10,4 @@ src/kingrinder_k6_case/seam_test_log.md
 # only the two case halves get published; everything else in output stays local
 *.gcode
 *.3mf
+/Users/jeff/projects/kingrinder-case-youtube-video/publish_todo.md

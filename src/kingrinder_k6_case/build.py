@@ -12,7 +12,7 @@ from loguru import logger
 here = Path(__file__).parent
 scad_file = here / "kingrinder_k6_case.scad"
 output_dir = here / "output"
-printed_parts = {"print_lower": "lower_case_body", "print_upper": "upper_case_body"}
+printed_parts = {"lower_half": "lower_case_body", "upper_half": "upper_case_body"}
 
 
 def render(target: Path, *extra: str) -> None:

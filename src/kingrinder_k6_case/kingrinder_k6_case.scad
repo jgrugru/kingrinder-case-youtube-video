@@ -9,11 +9,11 @@
 // Pockets are open upward, so no supports.
 //
 // Pick the view with the "part" dropdown in the Customizer.
-include <../kingrinder_k6/kingrinder_k6.scad>
+include <old_grinder/kingrinder_k6_old.scad>
 show_grinder_preview = false;      // use the replica's variables and modules only, do not draw it here
 
 // ---------- view selection ----------
-part = "open_fit_no_grinder";   // [exploded:Exploded, open_fit:Seated no top half, open_fit_no_grinder:Handle and ball only, lower_half_cut_through_ball:Lower half cut through ball, lower_half_cut_through_handle_scoop:Lower half cut through handle scoop, both_halves_cut_through_ball:Both halves cut through ball, both_halves_cut_through_handle_scoop:Both halves cut through handle scoop, print_lower:Print lower half, print_upper:Print upper half, print_test_section_cup_end_lower:Print test section cup end lower half, print_test_section_cup_end_upper:Print test section cup end upper half, print_test_sections_plate:Print both test sections on one plate]
+part = "exploded";   // [exploded:Exploded, upper_half:Upper half, lower_half:Lower half, both_halves_cut_through_ball:Both halves cut through ball, open_fit:No lid]
 test_section_length_mm = 40;       // quick fit test: only the cup end of the lower half (end wall, handle socket pocket, corners, tongue), measured from the cup end
 test_sections_plate_gap_mm = 10;   // gap between the lower and upper test sections on the shared print plate
 explode_gap_mm = 90;              // vertical distance of the upper half above the lower half in the exploded view (grinder, handle and ball sit halfway)
@@ -47,6 +47,7 @@ grip_ridge_wall_embed_mm = 1;      // how far each ridge is buried inside the wa
 ball_pocket_extra_clearance_mm = 0.5;   // extra wiggle room for the ball pocket only, on top of cutout_clearance_mm
 ball_to_grinder_gap_mm = 1.0;           // air between the wooden ball and the real grinder body (the pocket adds its own clearance on top)
 pocket_lift_height_mm = 80;             // handle and ball pockets are stretched upward by this much so they open into the grinder cavity
+handle_elbow_cutout_slice_count = 9;    // the elbow pocket is built from this many lifted slices of the bend
 
 // finger scoops: dips next to the ball and next to the handle arm so a fingertip can get under each.
 // each is a flattened, stretched ellipsoid so its floor rises gently instead of dropping steeply into the crevice
@@ -58,6 +59,14 @@ handle_scoop_distance_from_socket_mm = 22;           // along the arm
 handle_scoop_offset_from_arm_mm = 8;                 // beside the arm, on the ball side
 handle_scoop_floor_below_arm_mm = 5;                 // scoop floor below the underside of the arm slot
 ball_scoop_gap_to_ball_pocket_mm = 3;                // scoop center sits this far beyond the pocket edge, toward the cup end
+ball_scoop_floor_below_ball_center_mm = 7;           // scoop floor height under the ball centre. the curved pocket wall below it holds the ball in place, a fingertip still reaches under the ball's widest point
+
+// ridge trim: lowers the pointed ridge between the ball pocket, the finger scoop and the arm slot (cup end side of the ball).
+// a flattened ellipsoid on the arm slot's ball-side wall, hulled with the ball scoop so the ridge becomes a gentle ramp
+ball_arm_ridge_trim_radius_mm = 6;
+ball_arm_ridge_trim_stretch = [2, 1, 0.5];                 // long along the case, narrow across so it stays clear of the arm slot's far wall
+ball_arm_ridge_trim_x_from_ball_center_mm = -11;           // toward the cup end
+ball_arm_ridge_trim_floor_above_arm_axis_mm = 3;           // ridge is cut down to this height above the handle arm's centre line
 
 // ---------- sizes taken from the replica ----------
 cavity_radius_mm = collar_diameter_mm / 2 + cutout_clearance_mm;      // widest part of the grinder plus wiggle room
@@ -74,10 +83,10 @@ handle_socket_x_mm = end_wall_thickness_mm + handle_socket_diameter_mm / 2 + cut
 handle_origin_y_mm = (handle_extent_bent_end_side_mm - handle_extent_insert_side_mm) / 2;
 
 // ball: in the free area between the arm and the far edge of the bent end, halfway along the arm
-ball_free_start_local_z_mm = handle_arm_height_mm + handle_rod_diameter_mm / 2 + cutout_clearance_mm;
-ball_center_x_mm = handle_socket_x_mm + handle_arm_length_mm / 2;
-ball_center_y_mm = handle_origin_y_mm - (ball_free_start_local_z_mm + handle_extent_bent_end_side_mm) / 2;
 ball_pocket_radius_mm = handle_ball_diameter_mm / 2 + cutout_clearance_mm + ball_pocket_extra_clearance_mm;
+// the ball is bigger than the free strip beside the arm, so its pocket edge sits right at the arm slot and the case widens to fit the ball
+ball_center_x_mm = handle_socket_x_mm + handle_arm_length_mm / 2;
+ball_center_y_mm = handle_origin_y_mm - (handle_arm_height_mm + handle_rod_diameter_mm / 2) - ball_pocket_radius_mm;
 
 // the ball sits off to the side of the grinder axis, so it can tuck up closer than straight below:
 // keep its center a fixed distance from the axis. The handle shares this height.
@@ -88,11 +97,17 @@ handle_scoop_x_mm = handle_socket_x_mm + handle_scoop_distance_from_socket_mm;
 handle_scoop_y_mm = handle_origin_y_mm - handle_arm_height_mm - handle_scoop_offset_from_arm_mm;
 handle_scoop_center_z_mm = layer_center_z_mm - handle_rod_diameter_mm / 2 - cutout_clearance_mm - handle_scoop_floor_below_arm_mm + handle_scoop_radius_mm * handle_scoop_stretch[2];
 handle_scoop_center = [handle_scoop_x_mm, handle_scoop_y_mm, handle_scoop_center_z_mm];
-ball_scoop_center = [ball_center_x_mm - ball_pocket_radius_mm - ball_scoop_gap_to_ball_pocket_mm, ball_center_y_mm, layer_center_z_mm - ball_pocket_radius_mm + ball_scoop_radius_mm];
+ball_scoop_center = [ball_center_x_mm - ball_pocket_radius_mm - ball_scoop_gap_to_ball_pocket_mm, ball_center_y_mm, layer_center_z_mm - ball_scoop_floor_below_ball_center_mm + ball_scoop_radius_mm * ball_scoop_stretch[2]];
+arm_slot_ball_side_wall_y_mm = handle_origin_y_mm - handle_arm_height_mm - handle_rod_diameter_mm / 2 - cutout_clearance_mm;
+ball_arm_ridge_trim_center = [
+    ball_center_x_mm + ball_arm_ridge_trim_x_from_ball_center_mm,
+    arm_slot_ball_side_wall_y_mm,
+    layer_center_z_mm + ball_arm_ridge_trim_floor_above_arm_axis_mm + ball_arm_ridge_trim_radius_mm * ball_arm_ridge_trim_stretch[2]
+];
 
 // case extents: X = length, Y = width, Z = height (split plane at z=0). e = [x0, x1, y0, y1, z0, z1]
 case_length_mm = cavity_length_mm + 2 * end_wall_thickness_mm;
-case_half_width_mm = max(cavity_radius_mm, handle_total_extent_mm / 2) + wall_thickness_mm;
+case_half_width_mm = max(cavity_radius_mm, handle_total_extent_mm / 2, abs(ball_center_y_mm) + ball_pocket_radius_mm) + wall_thickness_mm;
 case_z_min_mm = layer_center_z_mm - ball_pocket_radius_mm - wall_thickness_mm;
 case_z_max_mm = cavity_radius_mm + wall_thickness_mm;
 case_extents = [0, case_length_mm, -case_half_width_mm, case_half_width_mm, case_z_min_mm, case_z_max_mm];
@@ -147,9 +162,12 @@ module handle_cutout() {
     insert_to_socket_radius_difference_mm = (handle_socket_diameter_mm - handle_insert_diameter_mm) / 2;
     lifted_in_handle_frame() hull() for (shift_x = [-insert_to_socket_radius_difference_mm, insert_to_socket_radius_difference_mm])
         translate([shift_x, 0, -handle_insert_length_mm - c]) cylinder(d = handle_insert_diameter_mm + 2 * c, h = handle_insert_length_mm + c);
-    lifted_in_handle_frame() translate([-c, 0, handle_arm_height_mm]) rotate([0, 90, 0]) cylinder(d = handle_rod_diameter_mm + 2 * c, h = handle_arm_length_mm + 2 * c);
-    lifted_in_handle_frame() translate([handle_arm_length_mm, 0, handle_arm_height_mm]) sphere(d = handle_rod_diameter_mm + 2 * c);   // rounded elbow
-    lifted_in_handle_frame() translate([handle_arm_length_mm, 0, handle_arm_height_mm - c]) cylinder(d = handle_rod_diameter_mm + 2 * c, h = handle_rise_mm + handle_ball_stub_length_mm + 2 * c);
+    lifted_in_handle_frame() handle_arm_straight(handle_rod_diameter_mm + 2 * c, arm_start_extension_mm = c);
+    // rounded elbow, lifted in slices so the hull follows the bend instead of filling its inside corner
+    elbow_slice_angle_deg = 90 / handle_elbow_cutout_slice_count;
+    for (slice_index = [0 : handle_elbow_cutout_slice_count - 1])
+        lifted_in_handle_frame() handle_elbow_bend(handle_rod_diameter_mm + 2 * c, sweep_start_deg = slice_index * elbow_slice_angle_deg, sweep_angle_deg = elbow_slice_angle_deg + 0.01);
+    lifted_in_handle_frame() handle_bent_end_straight(handle_rod_diameter_mm + 2 * c, bent_end_extension_mm = handle_ball_stub_length_mm + c);
 }
 
 // round pocket for the wooden ball, origin = ball center
@@ -167,6 +185,22 @@ module finger_scoop(center, radius, stretch) {
     }
 }
 
+// the ball scoop and the handle scoop are one smooth cutout: the hull of the two blends them into a single ramp
+module blended_finger_scoop() {
+    hull() {
+        finger_scoop(ball_scoop_center, ball_scoop_radius_mm, ball_scoop_stretch);
+        finger_scoop(handle_scoop_center, handle_scoop_radius_mm, handle_scoop_stretch);
+    }
+}
+
+// lowers the ridge between the ball pocket and the arm slot: hulled with the ball scoop so it ramps down instead of leaving a step
+module ball_arm_ridge_trim() {
+    hull() {
+        finger_scoop(ball_scoop_center, ball_scoop_radius_mm, ball_scoop_stretch);
+        finger_scoop(ball_arm_ridge_trim_center, ball_arm_ridge_trim_radius_mm, ball_arm_ridge_trim_stretch);
+    }
+}
+
 // handle and ball pockets (and scoops) only exist in the lower half (z <= 0)
 module case_voids() {
     place_grinder() grinder_body_cutout();
@@ -174,8 +208,8 @@ module case_voids() {
         union() {
             place_handle() handle_cutout();
             place_ball() ball_cutout();
-            finger_scoop(ball_scoop_center, ball_scoop_radius_mm, ball_scoop_stretch);
-            finger_scoop(handle_scoop_center, handle_scoop_radius_mm, handle_scoop_stretch);
+            blended_finger_scoop();
+            ball_arm_ridge_trim();
         }
         translate([-1, -300, -300]) cube([400, 600, 300.01]);
     }
@@ -361,8 +395,8 @@ module both_halves_cut(e, cut_x) {
 }
 
 // ---------- dispatch ----------
-if (part == "print_lower") print_lower(case_extents);
-else if (part == "print_upper") print_upper(case_extents);
+if (part == "lower_half") print_lower(case_extents);
+else if (part == "upper_half") print_upper(case_extents);
 else if (part == "print_test_section_cup_end_lower") print_test_section_cup_end_lower(case_extents);
 else if (part == "print_test_section_cup_end_upper") print_test_section_cup_end_upper(case_extents);
 else if (part == "print_test_sections_plate") print_test_sections_plate(case_extents);

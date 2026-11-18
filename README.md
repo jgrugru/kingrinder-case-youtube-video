@@ -1,5 +1,11 @@
 # Kingrinder K6 Case
 
+[![Watch the video](assets/thumbnail.png)](https://youtu.be/1Gm2xxaxk2Y)
+
+**Watch the video: https://youtu.be/1Gm2xxaxk2Y**
+
+This repo is the companion to that video.
+
 OpenSCAD models for a Kingrinder K6 hand grinder and a printable case built around it. Python build scripts render the `.scad` files to STL.
 
 ## Requirements
@@ -32,9 +38,9 @@ Writes both case halves to `src/kingrinder_k6_case/output/`:
 - `lower_case_body.stl` (bottom half)
 - `upper_case_body.stl` (top half)
 
-Only these two STLs and the grinder STL are committed. Other build output (G-code, `.3mf`, seam test plate) is gitignored.
+The STLs are not published in this repo. Generate them yourself with the build scripts above.
 
-The case includes `src/kingrinder_k6/kingrinder_k6.scad`, so changes to the grinder model affect the case.
+The case includes a frozen copy of the grinder model, `src/kingrinder_k6_case/old_grinder/kingrinder_k6_old.scad`, so edits to `src/kingrinder_k6/kingrinder_k6.scad` do not change the case.
 
 ### Seam test plate
 
